@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Finance Manager</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+  </head>
+  <body>
+      <div class="signup_container">
+        <button onclick="window.location.href='/'" class="btn"> Back </button>
+        <div class="content">
+          <div class="signup-form">
+            <h2> Finance Manager(Login) </h2>
+            <form action="/login" method="POST">
+              <label for="username">Username:</label>
+              <input type="text" name="username" placeholder="Username">
+              <p> </p>
+              <label for="password">Password:</label>
+              <input type="text" name="password" placeholder="Password">
+              <input class="btn1" type="submit" name="submit">
+            </form>  
+            <h3>{{ error }}</h3>
+          </div>
+        </div>
+    </div>
+  </body>
+</html>
