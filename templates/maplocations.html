@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Open-Source mobile friendly interactive map (Leaflet) -->
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}" />
+</head>
+<body>
+  <div class="container">
+    <div class="content">
+      <div class="sidebar" id="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('budget') }}">Budget</a>
+        <a href="{{ url_for('map') }}">Budget Options</a>
+        <a href="{{ url_for('logout') }}">Log Out</a>
+      </div>
+      <button class="openbtn" onclick="openNav()">☰</button> 
+      <div id="map"></div>
+      <form id="map-form" method="POST">
+          <input class="maptextform" type="text" id="search" placeholder="Search (Eg. Halal, Japanese)">
+          <input class="mapbutton" type="submit" value="Search">
+          <div class="control-group">
+            <label class="control control-checkbox">
+              $
+              <input type="checkbox" id="$" name="$" value="1">
+              <div class="control_indicator"></div>
+            </label>
+            <label class="control control-checkbox">
+              $$
+              <input type="checkbox" id="$$" name="$$" value="2">
+              <div class="control_indicator"></div>
+            </label>
+            <label class="control control-checkbox">
+              $$$
+              <input type="checkbox" id="$$$" name="$$$" value="3">
+              <div class="control_indicator"></div>
+            </label>
+            <label class="control control-checkbox">
+              $$$$
+              <input type="checkbox" id="$$$$" name="$$$$" value="4">
+              <div class="control_indicator"></div>
+            </label>
+            <label class="control control-checkbox">
+              $$$$$
+              <input type="checkbox" id="$$$$$" name="$$$$$" value="5">
+              <div class="control_indicator"></div>
+            </label>
+          </div>
+      </form>
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js">
+      </script>
+      <script>
+          var map = L.map('map');
+          var latitudes = {{ data['latitudes'] | tojson }};
+          var longitudes = {{ data['longitudes'] | tojson }};
+          var names = {{ data['names'] | tojson }};
+          var categories = {{ data['categories'] | tojson }};
+          var ratings = {{ data['ratings'] | tojson }};
+          var prices = {{ data['prices'] | tojson }};
+          var distances = {{ data['distances']| tojson }}
+
+          // Check if both arrays have the same length
+          if (latitudes.length !== longitudes.length) {
+              console.error("Latitude and longitude arrays have different lengths.");
+          } else {
+              // Iterate over the arrays and add markers for each location
+              for (var i = 0; i < latitudes.length; i++) {
+                var marker = L.marker([latitudes[i], longitudes[i]]).addTo(map)
+                  .bindPopup(`${names[i]}<br>${categories[i]}<br>${ratings[i]} stars<br>${prices[i]}<br>${distances[i]} km`);
+              }
+          }
+
+          // Initialize map with default location
+          map.setView([11.348, 142.199], 5); // Mariana Trench coordinates
+
+          // Add tile layer
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(map);
+
+          // Check if geolocation is supported and ask for user's location
+          if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(function(position) {
+                  var userLocation = [position.coords.latitude, position.coords.longitude];
+                  map.setView(userLocation, 13);
+
+                  L.marker(userLocation).addTo(map)
+                      .bindPopup('Your location');
+              }, function(error) {
+                  if (error.code == 1) {
+                      console.error('User denied Geolocation');
+                      // Show message to the user informing them about geolocation access
+                      alert('Please enable geolocation access to view your location.');
+                      // Set default location
+                      map.setView([11.348, 142.199], 5);
+                  } else {
+                      console.error('Error getting user location:', error);
+                      // Set default location if geolocation fails
+                      map.setView([11.348, 142.199], 5);
+                  }
+              });
+          }
+      </script>
+    </div>
+  </div>
+</body>
+</html>
