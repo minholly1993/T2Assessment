@@ -90,9 +90,19 @@ img:hover {
 }
 
 #map {
+    display: flex;
     height: 90vh;
     position: relative;
+    flex: 1;
+    overflow: hidden;
 }
+
+#map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 
 /* Target the Leaflet popup content */
 .leaflet-popup-content {
@@ -392,12 +402,32 @@ img:hover {
 }
 
 .bar-chart {
-  width: 1000px;
+  width: 100%;
   height: 50px;
   border: 1px solid #ccc;
-  margin-bottom: 20px;
-  overflow: hidden;
+  margin: 20px;
+  overflow: auto;
   white-space: nowrap;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none;
+}
+
+.bar-chart2 {
+  width: 100%;
+  height: 50px;
+  border: 1px solid #ccc;
+  overflow: auto;
+  white-space: nowrap;
+  padding-left: 2px;
+  padding-right: 2px; 
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none;
+}
+
+/* Hide scroll bars */
+.bar-chart2::-webkit-scrollbar
+.bar-chart::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in WebKit browsers */
 }
 
 .bar {
@@ -427,7 +457,7 @@ img:hover {
 .amt_total{
   padding: 5px;
   color: white;
-  font-size: 20px;
+  font-size: 1rem;
   font-weight: bold;
   text-align: left ;
 }
@@ -456,10 +486,17 @@ img:hover {
     max-height: 200px; /* Adjust to the maximum height of your content */
     transition: max-height 0.8s ease-in-out; /* Adjust the duration and timing function */
 }
+
 .content2 {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.5s ease;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: left;
 }
 
 .content2.show {

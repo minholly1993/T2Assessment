@@ -8,6 +8,9 @@ from sklearn.preprocessing import LabelEncoder
 import os
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import geocoder
+import requests
+import json
 
 # sql
 def createUserTable():
@@ -62,7 +65,8 @@ def verifyUser(username, password):
 
 # mongodb
 def connect():
-  uri = "mongodb+srv://bupingjin:minholly@t2assessment.uhyexsi.mongodb.net/?retryWrites=true&w=majority&appName=T2Assessment"
+  # uri = "mongodb+srv://bupingjin:minholly@t2assessment.uhyexsi.mongodb.net/?retryWrites=true&w=majority&appName=T2Assessment"
+  uri ="mongodb+srv://dbuser:Asrjc534768@cluster0.qq3apxs.mongodb.net/?retryWrites=true&w=majority"
   # Create a new client and connect to the server
   client = MongoClient(uri, server_api=ServerApi('1'))
   # Send a ping to confirm a successful connection
@@ -75,12 +79,16 @@ def connect():
     
 def createUserInfo(userid, username):
   client = connect()
+  print("test1")
   db = client["users"]
+  print("test2")
   col = db[str(userid)]
+  print("test3")
   budget = {"Income": 0, "Expenses": 0}
   profile = {"Name": username}
   data = {"budget": budget, "profile": profile}  
   col.insert_one(data)
+  print("test4")
 
 def addBudget(data, userid):
   client = connect()
@@ -175,41 +183,46 @@ def sortData(budget_data):
   max_amount = max(item["amt"] for item in budget_data.values())
   return total_budget, total_percentage, category_percentages, category_colors, max_amount
 
-# map
-# Function to fetch user's location based on IP address using freegeoip.app
+# Map Functions
+# Function to fetch user's location
 def get_user_location():
-  try:
-    response = request.get('https://freegeoip.app/json/')
-    data = response.json()
-    latitude = data.get('latitude')
-    longitude = data.get('longitude')
-    city = data.get('city')
-    return [latitude, longitude, city]
-  except Exception as e:
-    return None
+  # try:
+  #   response = requests.get('https://freegeoip.app/json/')
+  #   data = response.json()
+  #   latitude = data.get('latitude')
+  #   longitude = data.get('longitude')
+  #   city = data.get('city')
+  #   return [latitude, longitude, city]
+  # except:
+  #   return None
+  g = geocoder.ip('me')
+  if g.ok:
+    return g.latlng
   
 
-def get_locations(pricerange, term=None):
+def get_locations(term, pricerange):
   # Define your Yelp Fusion API key
-  API_KEY = os.environ['YELP_API_KEY']
+  API_KEY = "D_NtLvM4V8mzH8W4G5UHhRQPIMRhhcwwLIBioYX_iMqPW-AGfBaHkltwvfmUa9JZO6WSnUL5tlWFHcQbAXT-H4_mw7cYiJdpgZplmzHGitgfNeqH04aVgwr0dlwWZnYx"
 
   # Define the search parameters
-  user_location = None
+  user_location = get_user_location()
   if user_location:
+    # print("found location")
     params = {
         'term': term,
         'latitude': user_location[0],
         'longitude': user_location[1],
         'price': pricerange,
-        'limit': 10,
+        'limit': 15,
         'radius': 7500,
     }
   else: # default location (Singapore)
+    # print("no location")
     params = {
       'term': term,
-      'city': 'Singapore',
+      'location': 'Singapore',
       'price': pricerange,
-      'limit': 10,
+      'limit': 15,
       'radius': 7500,
     }
 
@@ -222,7 +235,7 @@ def get_locations(pricerange, term=None):
   }
 
   # Send the GET request to the Yelp Fusion API
-  response = request.get(url, params=params, headers=headers)
+  response = requests.get(url, params=params, headers=headers)
 
   # Parse the JSON response
   data = response.json()
@@ -314,12 +327,14 @@ def home():
 
 @app.route('/map', methods=["GET", "POST"])
 def map():
-  global logged_in_user
+  # global logged_in_user
+  logged_in_user = True
   if logged_in_user:
     userid = logged_in_user
     if request.method == "POST":
       term = request.form.get("term")
-      if term is None:
+      # print(term)
+      if term == '':  
         term = 'Any'
       price1 = request.form.get("$")
       price2 = request.form.get("$$")
@@ -327,12 +342,13 @@ def map():
       price4 = request.form.get("$$$$")
       price5 = request.form.get("$$$$$")
       pricerange = [price1, price2, price3, price4, price5]
-      pricerange = [int(pricerange[x]) for x in range(len(pricerange)) if pricerange[x] is not None]
+      pricerange = [int(pricerange[x]) for x in range(len(pricerange))                       if pricerange[x] is not None]
       if pricerange == []:
         pricerange = [1]
-      print(pricerange)
-      print(term)
+      # print(pricerange)
+      # print(term)
       locations = get_locations(term, pricerange)
+      # print("locations")
       data = {'latitudes': [],
               'longitudes': [],
               'names': [],
@@ -342,18 +358,21 @@ def map():
               'distances': []}
       # print(locations)
       if not locations:
-        pass
+        # print("no location")
+        return render_template('map.html')
       else:
+        # print("yes location")
+        # print(locations)
         for location in locations['businesses']:
           if location['coordinates']['latitude'] is None:
-            pass
+            return render_template('map.html')
           else:
             data['latitudes'].append(location['coordinates']['latitude'])
             data['longitudes'].append(location['coordinates']['longitude'])
             data['names'].append(location['name'])
             categories = ''
             for category in location['categories']:
-                print(category)
+                # print(category)
                 categories += category['title'] + ', '
             categories = categories[:-2]
             data['categories'].append(categories)
@@ -363,10 +382,12 @@ def map():
             else:
               data['prices'].append('N/A')
             data['distances'].append(str(round(location['distance']/1000, 2)))
-      print(data)
-      return render_template('maplocations.html', data=data)
+        # print(data)
+        return render_template('maplocations.html', data=data)
     else:
       return render_template('map.html')
+  else:
+    return render_template('index.html')
 
 @app.route('/budget', methods=["GET", "POST"])
 def budget():
@@ -512,4 +533,4 @@ def add_spending_category():
 
     
 if __name__ == "__main__":
-  app.run(host="0.0.0.0", port=80)
+  app.run(host="0.0.0.0", port=5001)

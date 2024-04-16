@@ -13,43 +13,115 @@
               <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
               <a href="{{ url_for('home') }}">Home</a>
               <a href="{{ url_for('budget') }}">Budget</a>
-              <a href="{{ url_for('map') }}">Budget Options</a>
+              <a href="{{ url_for('map') }}">Maperoni</a>
               <a href="{{ url_for('logout') }}">Log Out</a>
             </div>
             <button class="openbtn" onclick="openNav()">☰</button>  
-            {% if username %}
-              <h3> Hi {{ username }}! </h3>
+            <h1> Finance Manager(Budget) </h1>
+          
+          <h2>Budget overview</h2>
+          <div class="container_total">
+              <div class="bar-chart">
+                  {% for category, data in budget_data.items() %}
+                      <div class="bar {{ category|lower }}" style="width: {{ category_percentages[category] }}%; background-color: {{ category_colors[category] }};">
+                        <p class="amt_total"> ${{ data['amt'] }} </p>
+                      </div>
+                  {% endfor %}
+              </div>
+              <div class="legend">
+                  {% for category, data in budget_data.items() %}
+                      <div class="category-label {{ category|lower }}" style="background-color: {{ category_colors[category] }};">{{ category }}</div>
+                  {% endfor %}
+              </div>
+            </div>
+
+          <hr />
+          
+          <h2>Add Budget</h2>
+          <form action="/add_budget" method="POST">
+              <label for="category">Category:</label>
+              <!-- <input type="text" id="category" name="category" required> -->
+              <select name="category" id="category" required>
+                  {% for category in budget_data.keys() %}
+                      <option value="{{ category }}">{{ category }}</option>option>
+                  {% endfor %}
+              </select>
+              <label for="amount">Amount:</label>
+              <input type="number" id="amount" name="amount" required>
+              <button type="submit">Add Budget</button>
+          </form>
+
+          <hr />
+
+          <h2>Add Category</h2>
+          <form action="/add_spending_category" method="POST">
+            <label for="newCategory">New Category:</label>
+            <input type="text" id="newCategory" name="newCategory" required>
+            <label for="color">Choose a color:</label>
+            <input type="color" id="color" name="color" value="#000000" required>
+            <button type="submit">Add Category</button>
+          </form>
+
+          <hr />
+          
+          <div class="toggle-container1">
+              <h2>Budget Breakdown</h2>
+              <span class="toggle-button" onclick="toggleContent1()">▼</span>
+          </div>
+          <div class="content1" id="content1">
+            {% for category, data in budget_data.items() %}
+                <div class="label1">{{ category }}</div>
+                <div class="bar1">
+                    <div class="progress1" style="width: {{ category_percentages[category] }}%;"> <p class="amt_total"> ${{ data['amt'] }} </p> </div>
+                </div>
+            {% endfor %}
+          </div>
+          
+          <hr />
+      
+          <div class="toggle-container2">
+              <h2>Budget Generator</h2>
+              <span class="toggle-button2" onclick="toggleContent2()">▼</span>
+              {{ error }}
+          </div>
+          <div class="content2" id="content2">
+            {% if suggested_budget %}
+              <div class="bar-chart2">
+                  {% for category, data in suggested_budget.items() %}
+                      <div class="bar {{ category|lower }}" style="width: {{ suggested_percentages[category] }}%; background-color: {{ suggested_colors[category] }};">
+                          <p class="amt_total"> ${{ data['amt'] }} </p>
+                      </div>
+                  {% endfor %}
+              </div>
+            <div class="legend2">
+                <form method='post' action='add_suggested_budget'>
+                  {% for category, data in suggested_budget.items() %}
+                      <label>
+                        <input type="checkbox" name="category" value="{{ category }}" {% if category in checked_categories %}checked{% endif %}> 
+                          <div class="category-label {{ category|lower }}" style="background-color: {{ suggested_colors[category] }};">{{ category }}</div>
+                        </input>
+                      </label>
+                      <span class="checkmark"></span> 
+                      <input type="hidden" name="amt_{{ category }}" value="{{ data['amt'] }}">
+                      <input type="hidden" name="color_{{ category }}" value="{{ suggested_colors[category] }}">
+                  {% endfor %}
+                  <br />
+                  <button type="submit" class="btn">Update Budget</button>
+                </form>
+            </div>
             {% endif %}
-            <h1> Finance Manager(Home) </h1>
-
-            <hr />
-             <div class="top-section">
-             </div>
-              <h2>Welcome to Finance Manager</h2>
-              <h4>Take control of your finances with our powerful tools and features!</h4>
-              <h4>Are you ready for all your financial problmes to be solved with a click into our magnificent website that has everything you'll need.</h4>
-              <h4>Put your sunglasses on as you traverse into this masterpeice of a website.</h4>
-            <hr />
+            <br />
+            <div class="container_generator">
+              <form id="generator" method="post">
+                <button id="create_budget" class="btn" type="submit">Generate Budget</button>
+              </form>
+            </div>
+          </div>
           
-            <h2>Budget Features</h2>
-            <ul>
-                <li><strong>Budget Overview:</strong> Get a comprehensive view of your budget with detailed summaries and insights.</li>
-                <li><strong>Budget Breakdown:</strong> Analyze your spending habits by category with our breakdown feature.</li>
-                <li><strong>Budget Generator:</strong> Create customized budgets tailored to your financial goals and priorities.</li>
-            </ul>
-
-            <hr />
+          <hr />
           
-            <h2>Budget Options</h2>
-            <ul>
-                <li><strong>Map to Find Places Within Budget:</strong> Explore nearby locations that fit within your budget constraints, helping you make informed spending decisions.</li>
-                <!-- Add more features in budget options here if needed -->
-            </ul>
-
-            <hr />
-          
-            <p>Ready to take control of your finances? <a href="/budget">Explore our budgeting tools</a>.</p>
         </div>
+      
     </div>
     <script src="{{url_for('static', filename='script.js')}}"></script>
   </body>
